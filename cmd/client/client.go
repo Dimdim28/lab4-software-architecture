@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var target = flag.String("target", "http://localhost:8090", "request target")
+var target = flag.String("target", "http://localhost:8080", "request target")
 
 func main() {
 	flag.Parse()
