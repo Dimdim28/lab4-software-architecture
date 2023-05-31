@@ -5,19 +5,11 @@ import (
   "github.com/stretchr/testify/assert"
 )
 
-type Server struct {
-	URL     string
-	ConnCnt int
-	Healthy bool
-}
-
-var serversPool []Server
-
 func TestFindMinServer(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("No healthy servers", func(t *testing.T) {
-		serversPool = []Server{
+		serversPool = []*Server{
 			{URL: "Server1", ConnCnt: 10, Healthy: false},
 			{URL: "Server2", ConnCnt: 20, Healthy: false},
 			{URL: "Server3", ConnCnt: 30, Healthy: false},
@@ -26,7 +18,7 @@ func TestFindMinServer(t *testing.T) {
 	})
 
 	t.Run("All healthy servers", func(t *testing.T) {
-		serversPool = []Server{
+		serversPool = []*Server{
 			{URL: "Server1", ConnCnt: 10, Healthy: true},
 			{URL: "Server2", ConnCnt: 20, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
@@ -35,7 +27,7 @@ func TestFindMinServer(t *testing.T) {
 	})
 
 	t.Run("Mixed healthy and unhealthy servers", func(t *testing.T) {
-		serversPool = []Server{
+		serversPool = []*Server{
 			{URL: "Server1", ConnCnt: 10, Healthy: false},
 			{URL: "Server2", ConnCnt: 20, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
@@ -44,7 +36,7 @@ func TestFindMinServer(t *testing.T) {
 	})
 
 	t.Run("Minimum connection count", func(t *testing.T) {
-		serversPool = []Server{
+		serversPool = []*Server{
 			{URL: "Server1", ConnCnt: 10, Healthy: true},
 			{URL: "Server2", ConnCnt: 5, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
