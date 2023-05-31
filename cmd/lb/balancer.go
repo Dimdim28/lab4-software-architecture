@@ -45,10 +45,10 @@ func scheme() string {
 	return "http"
 }
 
-func health(server *Server) bool {
+func Health(server *Server) bool {
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	req, _ := http.NewRequestWithContext(ctx, "GET",
-		fmt.Sprintf("%s://%s/health", scheme(), server.URL), nil)
+		fmt.Sprintf("%s://%s/Health", scheme(), server.URL), nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return false
@@ -60,7 +60,7 @@ func health(server *Server) bool {
 	return true
 }
 
-func findMinServer() int {
+func FindMinServer() int {
 	minServerIndex := -1
 	minServerConnCnt := -1
 
@@ -81,7 +81,7 @@ func forward(rw http.ResponseWriter, r *http.Request) error {
 	fwdRequest := r.Clone(ctx)
 
 	mutex.Lock()
-	minServerIndex := findMinServer()
+	minServerIndex := FindMinServer()
 
 	if minServerIndex == -1 {
 		mutex.Unlock()
@@ -127,12 +127,12 @@ func main() {
 	flag.Parse()
 
 	for _, server := range serversPool {
-		server.Healthy = health(server)
+		server.Healthy = Health(server)
 		go func(s *Server) {
 			for range time.Tick(10 * time.Second) {
 				mutex.Lock()
-				s.Healthy = health(s)
-				log.Printf("%s: health=%t, connCnt=%d", s.URL, s.Healthy, s.ConnCnt)
+				s.Healthy = Health(s)
+				log.Printf("%s: Health=%t, connCnt=%d", s.URL, s.Healthy, s.ConnCnt)
 				mutex.Unlock()
 			}
 		}(server)
