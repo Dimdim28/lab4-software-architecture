@@ -8,6 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestScheme(t *testing.T) {
+	t.Run("HTTP", func(t *testing.T) {
+		*https = false
+		assert.Equal(t, "http", scheme())
+	})
+}
+
 func TestFindMinServer(t *testing.T) {
 	assert := assert.New(t)
 
