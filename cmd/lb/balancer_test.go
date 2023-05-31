@@ -13,6 +13,13 @@ func TestScheme(t *testing.T) {
 		*https = false
 		assert.Equal(t, "http", scheme())
 	})
+
+	t.Run("HTTPS", func(t *testing.T) {
+		*https = true
+		assert.Equal(t, "https", scheme())
+	})
+
+	*https = false
 }
 
 func TestFindMinServer(t *testing.T) {
