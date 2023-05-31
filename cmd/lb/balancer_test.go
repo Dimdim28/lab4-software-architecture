@@ -1,8 +1,11 @@
 package main
 
 import (
-  "testing"
-  "github.com/stretchr/testify/assert"
+	"net/http"
+	"testing"
+
+	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFindMinServer(t *testing.T) {
@@ -45,37 +48,19 @@ func TestFindMinServer(t *testing.T) {
 	})
 }
 
-// func Test_findMinServer(t *testing.T) {
-// 	tests := []struct {
-// 		server1 *Server
-// 		server2 *Server
-// 		server3 *Server
-// 	}{
-// 		{
-// 			server1: {URL: "server1:8080", ConnCnt: 0, Healthy: true},
-// 			server2: {URL: "server2:8080", ConnCnt: 0, Healthy: true},
-// 			server3: {URL: "server3:8080", ConnCnt: 0, Healthy: true},
-// 		},
-// 		{
-// 			server1: {URL: "server1:8080", ConnCnt: 5, Healthy: true},
-// 			server2: {URL: "server2:8080", ConnCnt: 9, Healthy: true},
-// 			server3: {URL: "server3:8080", ConnCnt: 3 Healthy: true},
-// 		},
-// 		{
-// 			server1: {URL: "server1:8080", ConnCnt: 1, Healthy: false},
-// 			server2: {URL: "server2:8080", ConnCnt: 4, Healthy: true},
-// 			server3: {URL: "server3:8080", ConnCnt: 5, Healthy: true},
-// 		},
-// 		{
-// 			server1: {URL: "server1:8080", ConnCnt: 5, Healthy: false},
-// 			server2: {URL: "server2:8080", ConnCnt: 5, Healthy: false},
-// 			server3: {URL: "server3:8080", ConnCnt: 5, Healthy: false},
-// 		}
-// 	}
+func TestHealth(t *testing.T) {
+	mockURL := "http://example.com/Health"
+	httpmock.RegisterResponder(http.MethodGet, mockURL, httpmock.NewStringResponder(http.StatusOK, ""))
 
-// 	for _, tc := range tests {
-// 		t.Run("test", func(t *testing.T) {
-// 			assert.Equal()
-// 		})
-// 	}
-// }
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	server := &Server{
+		URL: "example.com",
+	}
+
+	result := Health(server)
+
+	assert.True(t, result)
+	assert.True(t, server.Healthy)
+}
