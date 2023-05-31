@@ -63,4 +63,12 @@ func TestHealth(t *testing.T) {
 
 	assert.True(t, result)
 	assert.True(t, server.Healthy)
+
+	server.Healthy = false // скинув перед некст тестом
+
+	httpmock.RegisterResponder(http.MethodGet, mockURL, httpmock.NewStringResponder(http.StatusInternalServerError, ""))
+	result2 := Health(server)
+
+	assert.False(t, result2)
+	assert.False(t, server.Healthy)
 }
