@@ -51,9 +51,11 @@ func Health(server *Server) bool {
 		fmt.Sprintf("%s://%s/Health", scheme(), server.URL), nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		server.Healthy = false //скидання
 		return false
 	}
 	if resp.StatusCode != http.StatusOK {
+		server.Healthy = false //скидання
 		return false
 	}
 	server.Healthy = true
