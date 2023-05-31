@@ -32,7 +32,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 20, Healthy: false},
 			{URL: "Server3", ConnCnt: 30, Healthy: false},
 		}
-		assert.Equal(-1, FindMinServer())
+		assert.Equal(-1, findMinServer())
 	})
 
 	t.Run("All healthy servers", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 20, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
 		}
-		assert.Equal(0, FindMinServer())
+		assert.Equal(0, findMinServer())
 	})
 
 	t.Run("Mixed healthy and unhealthy servers", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 20, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
 		}
-		assert.Equal(1, FindMinServer())
+		assert.Equal(1, findMinServer())
 	})
 
 	t.Run("Minimum connection count", func(t *testing.T) {
@@ -59,12 +59,12 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 5, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
 		}
-		assert.Equal(1, FindMinServer())
+		assert.Equal(1, findMinServer())
 	})
 }
 
 func TestHealth(t *testing.T) {
-	mockURL := "http://example.com/Health"
+	mockURL := "http://example.com/health"
 	httpmock.RegisterResponder(http.MethodGet, mockURL, httpmock.NewStringResponder(http.StatusOK, ""))
 
 	httpmock.Activate()
@@ -74,7 +74,7 @@ func TestHealth(t *testing.T) {
 		URL: "example.com",
 	}
 
-	result := Health(server)
+	result := health(server)
 
 	assert.True(t, result)
 	assert.True(t, server.Healthy)
@@ -82,7 +82,7 @@ func TestHealth(t *testing.T) {
 	server.Healthy = false // скинув перед некст тестом
 
 	httpmock.RegisterResponder(http.MethodGet, mockURL, httpmock.NewStringResponder(http.StatusInternalServerError, ""))
-	result2 := Health(server)
+	result2 := health(server)
 
 	assert.False(t, result2)
 	assert.False(t, server.Healthy)
