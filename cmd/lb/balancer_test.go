@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -85,4 +86,42 @@ func TestHealth(t *testing.T) {
 
 	assert.False(t, result2)
 	assert.False(t, server.Healthy)
+}
+
+func TestForward(t *testing.T) {
+	assert := assert.New(t)
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", "http://server1:8080/",
+		httpmock.NewStringResponder(200, "OK"))
+
+	serversPool = []*Server{
+		{URL: "server1:8080", Healthy: true},
+	}
+
+	req, err := http.NewRequest("GET", "/", nil)
+	assert.Nil(err)
+	rr := httptest.NewRecorder()
+	err = forward(rr, req)
+	assert.Nil(err)
+}
+
+func TestForwardWithUnhealthyServer(t *testing.T) {
+	assert := assert.New(t)
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", "http://server1:8080/",
+		httpmock.NewStringResponder(500, "Error"))
+
+	serversPool = []*Server{
+		{URL: "server1:8080", Healthy: false},
+	}
+
+	req, err := http.NewRequest("GET", "/", nil)
+	assert.Nil(err)
+	rr := httptest.NewRecorder()
+	err = forward(rr, req)
+	assert.NotNil(err)
 }
