@@ -60,20 +60,20 @@ func health(server *Server) bool {
 	return true
 }
 
-func findMinServer() int {
-	minServerIndex := -1
-	minServerConnCnt := -1
+func findBestServer(pool []*Server) int {
+	bestServerIndex := -1
+	bestServerConnCnt := -1
 
-	for i, server := range serversPool {
+	for i, server := range pool {
 		if server.Healthy {
-			if minServerIndex == -1 || server.ConnCnt < minServerConnCnt {
-				minServerIndex = i
-				minServerConnCnt = server.ConnCnt
+			if bestServerIndex == -1 || server.ConnCnt < bestServerConnCnt {
+				bestServerIndex = i
+				bestServerConnCnt = server.ConnCnt
 			}
 		}
 	}
 
-	return minServerIndex
+	return bestServerIndex
 }
 
 func forward(rw http.ResponseWriter, r *http.Request) error {
@@ -81,7 +81,7 @@ func forward(rw http.ResponseWriter, r *http.Request) error {
 	fwdRequest := r.Clone(ctx)
 
 	mutex.Lock()
-	minServerIndex := findMinServer()
+	minServerIndex := findBestServer(serversPool)
 
 	if minServerIndex == -1 {
 		mutex.Unlock()

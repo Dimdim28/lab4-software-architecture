@@ -23,7 +23,7 @@ func TestScheme(t *testing.T) {
 	*https = false
 }
 
-func TestFindMinServer(t *testing.T) {
+func TestFindBestServer(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("No healthy servers", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 20, Healthy: false},
 			{URL: "Server3", ConnCnt: 30, Healthy: false},
 		}
-		assert.Equal(-1, findMinServer())
+		assert.Equal(-1, findBestServer(serversPool))
 	})
 
 	t.Run("All healthy servers", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 20, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
 		}
-		assert.Equal(0, findMinServer())
+		assert.Equal(0, findBestServer(serversPool))
 	})
 
 	t.Run("Mixed healthy and unhealthy servers", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 20, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
 		}
-		assert.Equal(1, findMinServer())
+		assert.Equal(1, findBestServer(serversPool))
 	})
 
 	t.Run("Minimum connection count", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestFindMinServer(t *testing.T) {
 			{URL: "Server2", ConnCnt: 5, Healthy: true},
 			{URL: "Server3", ConnCnt: 30, Healthy: true},
 		}
-		assert.Equal(1, findMinServer())
+		assert.Equal(1, findBestServer(serversPool))
 	})
 }
 
