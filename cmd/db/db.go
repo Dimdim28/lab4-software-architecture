@@ -43,33 +43,39 @@ func handleDb(rw http.ResponseWriter, r *http.Request) {
 		t := r.URL.Query().Get("type")
 		switch t {
 		case "", "string":
-			sendResponse(rw, getString(key))
+			data, err := getString(key)
+			sendResponse(rw, data, err)
 		case "int64":
-			sendResponse(rw, getInt64(key))
+			data, err := getInt64(key)
+			sendResponse(rw, data, err)
 		default:
-			http.Error(rw, "Wrong type of data", http.StatusBadRequest)
+			http.Error(rw, "Unknown data type", http.StatusBadRequest)
 		}
 	case http.MethodPost:
 		t := r.URL.Query().Get("type")
 		value := r.FormValue("value")
 		switch t {
 		case "", "string":
-			sendResponse(rw, putString(key, value))
+			err := putString(key, value)
+			sendResponse(rw, nil, err)
 		case "int64":
-			sendResponse(rw, putInt64(key, value))
+			err := putInt64(key, value)
+			sendResponse(rw, nil, err)
 		default:
-			http.Error(rw, "Wrong type of data", http.StatusBadRequest)
+			http.Error(rw, "Unknown data type", http.StatusBadRequest)
 		}
 	default:
-		http.Error(rw, "Wrong method", http.StatusMethodNotAllowed)
+		http.Error(rw, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
 func sendResponse(rw http.ResponseWriter, data interface{}, err error) {
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
-	} else if err := json.NewEncoder(rw).Encode(data); err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	} else if data != nil {
+		if err := json.NewEncoder(rw).Encode(data); err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -97,7 +103,7 @@ func getInt64(key string) (interface{}, error) {
 
 func putString(key, value string) error {
 	if value == "" {
-		return fmt.Errorf("The value is empty")
+		return fmt.Errorf("can't save empty value")
 	}
 	return db.Put(key, value)
 }
@@ -105,7 +111,7 @@ func putString(key, value string) error {
 func putInt64(key, value string) error {
 	i, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
-		return fmt.Errorf("This data type can not be converted")
+		return fmt.Errorf("can't convert value to the given type")
 	}
 	return db.PutInt64(key, i)
 }
