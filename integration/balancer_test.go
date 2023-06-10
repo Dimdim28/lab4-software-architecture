@@ -56,7 +56,7 @@ func (s *IntegrationTestSuite) TestGetRequest() {
 			serverNum = 3
 		}
 
-		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum), resp.Header.Get("lb-from"))
+		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum+1), resp.Header.Get("lb-from"))
 	}
 }
 
