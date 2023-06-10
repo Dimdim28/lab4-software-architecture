@@ -125,6 +125,8 @@ func (db *Db) Put(key, value string) error {
 		return nil
 	}
 
+	lastBlock.close()
+
 	err = db.addNewBlockToDb() // then we create a new block, if no place to write
 	if err != nil {
 		return err

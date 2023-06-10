@@ -21,7 +21,6 @@ func TestDb_Put(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
 
 	pairs := [][]string{
 		{"key1", "value1"},
