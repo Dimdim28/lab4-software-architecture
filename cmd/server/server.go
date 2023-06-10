@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -19,6 +20,11 @@ var (
 	debug      = flag.Bool("debug", false, "whether we can change server's health status")
 	dbUrl      = flag.String("db-url", "db:8100", "hostname of database service")
 	report		 = make(Report)
+)
+
+const (
+	scheme = "http"
+  teamName = "procrastinaiton"
 )
 
 type boolMutex struct {
@@ -42,6 +48,7 @@ func main() {
 	flag.Parse()
 	h := new(http.ServeMux)
 	health := boolMutex{v: *healthInit}
+	createTeam()
 
 	h.Handle("/health", healthHandler(&health))
 	if *debug {
@@ -114,4 +121,14 @@ func copyResponseDetails(rw http.ResponseWriter, resp *http.Response) {
 	rw.Header().Set("Content-Length", resp.Header.Get("Content-Length"))
 	io.Copy(rw, resp.Body)
 	resp.Body.Close()
+}
+
+func createTeam() {
+	formData := url.Values{}
+	formData.Set("value", time.Now().Format("2006-01-02"))
+
+	resp, err := http.PostForm(scheme + "://" + *dbUrl + "/db/" + teamName, formData)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		panic("Error occured when initializing DB")
+	}
 }
