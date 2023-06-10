@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"sync"
 	"time"
+	"io/ioutil"
 
 	"github.com/Dimdim28/lab4-software-architecture/httptools"
 	"github.com/Dimdim28/lab4-software-architecture/signal"
@@ -102,15 +103,22 @@ func performDbRequest(ctx context.Context, rw http.ResponseWriter, r *http.Reque
 	fwdRequest.URL.Path = "/db/" + key
 
 	resp, err := http.DefaultClient.Do(fwdRequest)
+	if *delay > 0 && *delay < 300 {
+		time.Sleep(time.Duration(*delay) * time.Millisecond)
+	}
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if *delay > 0 && *delay < 300 {
-		time.Sleep(time.Duration(*delay) * time.Millisecond)
+	if resp.StatusCode == http.StatusBadRequest {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil && string(body) == "record does not exist\n" {
+			rw.WriteHeader(http.StatusNotFound)
+			return
+		}
 	}
-
+	
 	report.Process(r)
 	copyResponseDetails(rw, resp)
 }

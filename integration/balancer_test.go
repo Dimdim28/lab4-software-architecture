@@ -57,7 +57,12 @@ func (s *IntegrationTestSuite) TestGetRequest() {
 		}
 		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum), resp.Header.Get("lb-from"))
 	}
+
+	resp, err = getData("procrastination")
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
+
+
 
 func (s *IntegrationTestSuite) BenchmarkBalancer(b *testing.B) {
 	if _, exists := os.LookupEnv("INTEGRATION_TEST"); !exists {
