@@ -3,6 +3,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -15,6 +16,18 @@ const baseAddress = "http://balancer:8090"
 
 var client = http.Client{
 	Timeout: 3 * time.Second,
+}
+
+const teamName = "procrastinatioin"
+
+func getData(key string) (*http.Response, error) {
+	path := fmt.Sprintf("%s/api/v1/some-data", baseAddress)
+
+	queryParams := url.Values{}
+	queryParams.Set("key", key)
+	path += "?" + queryParams.Encode()
+
+	return client.Get(path)
 }
 
 type IntegrationTestSuite struct {
@@ -32,7 +45,7 @@ func (s *IntegrationTestSuite) TestGetRequest() {
 
 	serverNum := 0
 	for i := 0; i < 10; i++ {
-		resp, err := client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
+		resp, err := getData(teamName)
 		assert.NoError(s.T(), err)
 
 		if i%3 == 0 {
@@ -52,7 +65,7 @@ func (s *IntegrationTestSuite) BenchmarkBalancer(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
+		_, err := getData(teamName)
 		assert.NoError(s.T(), err)
 	}
 }
