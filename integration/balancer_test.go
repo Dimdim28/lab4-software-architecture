@@ -58,6 +58,8 @@ func (s *IntegrationTestSuite) TestGetRequest() {
 
 		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum), resp.Header.Get("lb-from"))
 	}
+	resp, _ := getData("procrastination")
+	assert.Equal(s.T(), http.StatusNotFound, resp.StatusCode)
 }
 
 // func (s *IntegrationTestSuite) Test404Error() {
