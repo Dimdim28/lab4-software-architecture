@@ -41,26 +41,25 @@ func NewDb(dir string) (*Db, error) {
 		return nil, err
 	}
 
-	if len(filesNames) != 0 { // call recovery, if directory is not empty
+	if len(filesNames) != 0 { // call recovery, if directory is no empty
 		err := db.recover(filesNames)
 		if err != nil {
 			return nil, err
 		}
-		return db, nil
+	} else { // create the first block, if directory is empty
+		err = db.addNewBlockToDb()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	err = db.addNewBlockToDb() // directory is empty, we create the first block
-	if err != nil {
-		return nil, err
-	}
 	return db, nil
 }
 
 func (db *Db) addNewBlockToDb() error {
 	db.segmentNumber++
 	b, err := newBlock(db.dir,
-		db.segmentName+strconv.Itoa((db.segmentNumber)),
-		db.segmentSize)
+		db.segmentName+strconv.Itoa((db.segmentNumber)))
 	if err != nil {
 		return err
 	}
@@ -76,7 +75,7 @@ func (db *Db) recover(filesNames []string) error { // sort by growth
 		match := r.MatchString(fileName)
 
 		if match {
-			b, err := newBlock(db.dir, fileName, db.segmentSize)
+			b, err := newBlock(db.dir, fileName)
 			if err != nil {
 				return err
 			}
@@ -94,23 +93,28 @@ func (db *Db) recover(filesNames []string) error { // sort by growth
 }
 
 func (db *Db) Close() error {
-	return db.blocks[len(db.blocks)-1].close()
+	for _, block := range db.blocks {
+		block.close()
+	}
+	return nil
 }
 
-func (db *Db) Get(key string) (string, error) {
+func (db *Db) getType(key string) (string, string, error) {
+	var val, vType string
+	var err error
 	for j := len(db.blocks) - 1; j >= 0; j-- {
-		val, err := db.blocks[j].get(key)
+		val, vType, err = db.blocks[j].get(key)
 		if err != nil && err != ErrNotFound {
-			return "", err
+			return "", "", err
 		}
 		if val != "" {
-			return val, nil
+			return val, vType, nil
 		}
 	}
-	return "", ErrNotFound
+	return "", "", ErrNotFound
 }
 
-func (db *Db) Put(key, value string) error {
+func (db *Db) putType(key, vType, value string) error {
 	lastBlock := db.blocks[len(db.blocks)-1]
 	curSize, err := lastBlock.size()
 	if err != nil {
@@ -118,7 +122,7 @@ func (db *Db) Put(key, value string) error {
 	}
 
 	if curSize <= db.segmentSize {
-		err := lastBlock.put(key, value)
+		err := lastBlock.put(key, vType, value)
 		if err != nil {
 			return err
 		}
@@ -130,13 +134,13 @@ func (db *Db) Put(key, value string) error {
 		return err
 	}
 
-	err = db.blocks[len(db.blocks)-1].put(key, value)
+	err = db.blocks[len(db.blocks)-1].put(key, vType, value)
 	if err != nil {
 		return err
 	}
 
 	if len(db.blocks) > 2 { // if there are enug files, start the merge
-		err = db.compactAndMerge()
+		err = db.merge()
 		if err != nil {
 			return err
 		}
@@ -144,8 +148,50 @@ func (db *Db) Put(key, value string) error {
 	return nil
 }
 
-func (db *Db) compactAndMerge() error {
-	tempBlock, err := compactAndMergeBlocksIntoOne(db.blocks[:len(db.blocks)-1])
+func (db *Db) Get(key string) (string, error) {
+	val, vType, err := db.getType(key)
+	if err != nil {
+		return "", err
+	}
+	if vType != "string" {
+		return "", fmt.Errorf("wrong type of value")
+	}
+	return val, nil
+}
+
+func (db *Db) Put(key, value string) error {
+	err := db.putType(key, "string", value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *Db) GetInt64(key string) (int64, error) {
+	val, vType, err := db.getType(key)
+	if err != nil {
+		return 0, err
+	}
+	if vType != "int64" {
+		return 0, fmt.Errorf("wrong type of value")
+	}
+	n, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
+}
+
+func (db *Db) PutInt64(key string, value int64) error {
+	err := db.putType(key, "int64", strconv.FormatInt(value, 10))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *Db) merge() error {
+	tempBlock, err := mergeAll(db.blocks[:len(db.blocks)-1])
 	if err != nil {
 		return err
 	}

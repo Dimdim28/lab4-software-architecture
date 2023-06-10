@@ -35,7 +35,7 @@ func TestDb_Put(t *testing.T) {
 	}
 	defer outFile.Close()
 
-	t.Run("put/get", func(t *testing.T) {
+	t.Run("PUT/GET", func(t *testing.T) {
 		for _, pair := range pairs {
 			err := db.Put(pair[0], pair[1])
 			if err != nil {
@@ -73,7 +73,7 @@ func TestDb_Put(t *testing.T) {
 		}
 	})
 
-	t.Run("new db process", func(t *testing.T) {
+	t.Run("new DB process", func(t *testing.T) {
 		if err := db.Close(); err != nil {
 			t.Fatal(err)
 		}
@@ -121,7 +121,7 @@ func TestDb_Put(t *testing.T) {
 		}
 	})
 
-	t.Run("get, if db has more than one file", func(t *testing.T) {
+	t.Run("get, if DB has more than one file", func(t *testing.T) {
 		value, err := db.Get(pairs2[5][0])
 		if err != nil {
 			t.Errorf("ERROR! Can't get %s: %s", pairs2[5][0], err)
@@ -159,6 +159,50 @@ func TestDb_Put(t *testing.T) {
 		}
 		if len(files) != 2 {
 			t.Errorf("ERROR!\nExpected: 2;\nGot: %d", len(files))
+		}
+	})
+}
+
+func TestDb_PutInt64(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test-db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	const outFileSize int64 = 300
+
+	db, err := NewDb(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pairs := []struct {
+		key   string
+		value int64
+	}{
+		{"key1", 1},
+		{"key2", 2},
+		{"key3", 3},
+	}
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("PUT/GET", func(t *testing.T) {
+		for _, pair := range pairs {
+			err := db.PutInt64(pair.key, pair.value)
+			if err != nil {
+				t.Errorf("ERROR! Can't put %v: %s", pair, err)
+			}
+			value, err := db.GetInt64(pair.key)
+			if err != nil {
+				t.Errorf("ERROR! Can't get %v: %s", pair, err)
+			}
+			if value != pair.value {
+				t.Errorf("ERROR!\nExpected: %v;\nGot: %v", pair.value, value)
+			}
 		}
 	})
 }

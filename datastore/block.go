@@ -26,7 +26,7 @@ type block struct {
 	cancel    context.CancelFunc
 }
 
-func newBlock(dir, outFileName string, outFileSize int64) (*block, error) {
+func newBlock(dir, outFileName string) (*block, error) {
 	outputPath := filepath.Join(dir, outFileName)
 	f, err := os.OpenFile(outputPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
@@ -112,43 +112,52 @@ func (b *block) close() error {
 	return b.segment.Close()
 }
 
-func (b *block) get(key string) (string, error) {
+func (b *block) get(key string) (string, string, error) {
 	b.rwmu.RLock()
 	defer b.rwmu.RUnlock()
 
 	position, ok := b.index[key]
 
 	if !ok {
-		return "", ErrNotFound
+		return "", "", ErrNotFound
 	}
 
 	file, err := os.Open(b.outPath)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer file.Close()
 
 	_, err = file.Seek(position, 0)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	reader := bufio.NewReader(file)
 	value, err := readValue(reader)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return value, nil
+	_, err = file.Seek(position, 0)
+	if err != nil {
+		return "", "", err
+	}
+	vType, err := readType(reader)
+	if err != nil {
+		return "", "", err
+	}
+	return value, vType, nil
 }
 
-func (b *block) put(key, value string) error {
+func (b *block) put(key, vType, value string) error {
 
 	b.rwmu.Lock()
 	defer b.rwmu.Unlock()
 
 	e := entry{
 		key:   key,
+		vType: vType,
 		value: value,
 	}
 
@@ -190,18 +199,18 @@ func (b *block) size() (int64, error) {
 	return currentSize, nil
 }
 
-func compactAndMergeBlocksIntoOne(blocks []*block) (*block, error) {
+func mergeAll(blocks []*block) (*block, error) {
 	if len(blocks) == 0 {
 		return nil, fmt.Errorf("empty array of blocks")
 	}
 
-	newBlock, err := newBlock(blocks[0].outPath+"-temp", "", 0)
+	newBlock, err := newBlock(blocks[0].outPath+"-temp", "")
 	if err != nil {
 		return nil, err
 	}
 
 	for j := len(blocks) - 1; j >= 0; j-- {
-		err = merge2blocks(newBlock, blocks[j])
+		err = mergeTwoBlocks(newBlock, blocks[j])
 		if err != nil {
 			return nil, err
 		}
@@ -210,15 +219,15 @@ func compactAndMergeBlocksIntoOne(blocks []*block) (*block, error) {
 	return newBlock, nil
 }
 
-func merge2blocks(destBlock, srcBlock *block) error {
+func mergeTwoBlocks(destBlock, srcBlock *block) error {
 	for key := range srcBlock.index {
 		_, ok := destBlock.index[key]
 		if !ok {
-			val, err := srcBlock.get(key)
+			val, vType, err := srcBlock.get(key)
 			if err != nil {
 				return err
 			}
-			destBlock.put(key, val)
+			destBlock.put(key, vType, val)
 		}
 	}
 	return nil
