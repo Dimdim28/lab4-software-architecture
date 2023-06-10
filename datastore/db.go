@@ -30,6 +30,10 @@ func NewDb(dir string) (*Db, error) {
 		segmentSize: outFileSize,
 	}
 
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.MkdirAll(dir, os.ModePerm)
+	}
+
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, err
