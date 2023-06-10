@@ -55,13 +55,19 @@ func (s *IntegrationTestSuite) TestGetRequest() {
 		} else {
 			serverNum = 3
 		}
-		resp, err = getData("procrastination")
-		assert.Equal(s.T(), http.StatusNotFound, resp.StatusCode)
 
-		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum + 1), resp.Header.Get("lb-from"))
+		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum), resp.Header.Get("lb-from"))
 	}
 }
 
+func (s *IntegrationTestSuite) Test404Error() {
+	if _, exists := os.LookupEnv("INTEGRATION_TEST"); !exists {
+		s.T().Skip("Integration test is not enabled")
+	}
+
+	resp, err = getData("procrastination")
+		assert.Equal(s.T(), http.StatusNotFound, resp.StatusCode)
+}
 
 
 func (s *IntegrationTestSuite) BenchmarkBalancer(b *testing.B) {
