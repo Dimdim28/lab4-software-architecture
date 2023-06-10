@@ -65,7 +65,7 @@ func (s *IntegrationTestSuite) Test404Error() {
 		s.T().Skip("Integration test is not enabled")
 	}
 
-	resp, err := getData("procrastination")
+	resp, _ := getData("procrastination")
 	assert.Equal(s.T(), http.StatusNotFound, resp.StatusCode)
 }
 
