@@ -140,7 +140,7 @@ func TestDb_Put(t *testing.T) {
 		}
 	})
 
-	/*t.Run("merge", func(t *testing.T) {
+	t.Run("merge", func(t *testing.T) {
 		for _, pair := range pairs2 {
 			err := db.Put(pair[0], pair[1])
 			if err != nil {
@@ -161,5 +161,5 @@ func TestDb_Put(t *testing.T) {
 		if len(files) != 2 {
 			t.Errorf("ERROR!\nExpected: 2;\nGot: %d", len(files))
 		}
-	})*/
+	})
 }
