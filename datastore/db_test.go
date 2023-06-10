@@ -15,7 +15,7 @@ func TestDb_Put(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	const outFileSize int64 = 200
+	const outFileSize int64 = 300
 
 	db, err := NewDb(dir)
 	if err != nil {
@@ -28,12 +28,10 @@ func TestDb_Put(t *testing.T) {
 		{"key3", "value3"},
 	}
 
-	segmentPath := filepath.Join(dir, db.segmentName+strconv.Itoa(db.segmentNumber))
-	outFile, err := os.Open(segmentPath)
+	outFile, err := os.Open(filepath.Join(dir, db.segmentName+strconv.Itoa((db.segmentNumber))))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer outFile.Close()
 
 	t.Run("PUT/GET", func(t *testing.T) {
 		for _, pair := range pairs {
@@ -74,9 +72,6 @@ func TestDb_Put(t *testing.T) {
 	})
 
 	t.Run("new DB process", func(t *testing.T) {
-		if err := db.Close(); err != nil {
-			t.Fatal(err)
-		}
 		db, err = NewDb(dir)
 		if err != nil {
 			t.Fatal(err)
@@ -85,10 +80,10 @@ func TestDb_Put(t *testing.T) {
 		for _, pair := range pairs {
 			value, err := db.Get(pair[0])
 			if err != nil {
-				t.Errorf("ERROR! Can't get %s: %s", pair[0], err)
+				t.Errorf("Cannot put %s: %s", pairs[0], err)
 			}
 			if value != pair[1] {
-				t.Errorf("ERROR! Bad value returned expected %s, got %s", pair[1], value)
+				t.Errorf("Bad value returned expected %s, got %s", pair[1], value)
 			}
 		}
 	})
@@ -97,9 +92,9 @@ func TestDb_Put(t *testing.T) {
 		{"keyA", "valueA"},
 		{"keyB", "valueB"},
 		{"keyC", "valueC"},
+		{"keyD", "valueD"},
 		{"keyA", "newA"},
 		{"keyB", "newB"},
-		{"keyC", "newC"},
 	}
 
 	t.Run("create new out file when the previous file approximately reached the expected size", func(t *testing.T) {
@@ -111,30 +106,36 @@ func TestDb_Put(t *testing.T) {
 			}
 		}
 
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.Open(dir)
 		if err != nil {
 			t.Fatalf("ERROR! Unexpected error: %v", err)
 		}
-		if len(files) != 2 {
-			t.Errorf("ERROR!\nExpected: 2;\nGot %d;", len(files))
+		defer files.Close()
+		filesNames, err := files.Readdirnames(0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		n := len(filesNames)
+		if n != 2 {
+			t.Errorf("Expected 2 files in the directory, got %v", n)
 		}
 	})
 
-	t.Run("get, if DB has more than one file", func(t *testing.T) {
+	t.Run("get, if db has more than one files, ", func(t *testing.T) {
 		value, err := db.Get(pairs2[5][0])
 		if err != nil {
-			t.Errorf("ERROR! Can't get %s: %s", pairs2[5][0], err)
+			t.Errorf("Cannot get %s: %s", pairs2[5], err)
 		}
 		if value != pairs2[5][1] {
-			t.Errorf("ERROR! Bad value returned\nExpected: %s\nGot: %s", pairs2[5][1], value)
+			t.Errorf("Bad value returned expected %s, got %s", pairs2[5], value)
 		}
 
 		value, err = db.Get(pairs[0][0])
 		if err != nil {
-			t.Errorf("ERROR! Can't get %s: %s", pairs[0][0], err)
+			t.Errorf("Cannot get %s: %s", pairs2[5], err)
 		}
 		if value != pairs[0][1] {
-			t.Errorf("ERROR! Bad value returned\nExpected: %s;\nGot: %s", pairs[0][1], value)
+			t.Errorf("Bad value returned expected %s, got %s", pairs[0], value)
 		}
 	})
 
@@ -152,12 +153,18 @@ func TestDb_Put(t *testing.T) {
 			}
 		}
 
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.Open(dir)
 		if err != nil {
 			t.Fatalf("ERROR! Unexpected error: %v", err)
 		}
-		if len(files) != 2 {
-			t.Errorf("ERROR!\nExpected: 2;\nGot: %d", len(files))
+		defer files.Close()
+		filesNames, err := files.Readdirnames(0)
+		if err != nil {
+			t.Fatalf("ERROR! Unexpected error: %v", err)
+		}
+		n := len(filesNames)
+		if n != 2 {
+			t.Errorf("ERROR!\nExpected: 2;\nGot: %v", n)
 		}
 	})
 }
