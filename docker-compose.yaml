@@ -40,7 +40,7 @@ services:
     ports:
       - "8082:8080"
 
-    db:
+  db:
     build: .
     command: "db"
     networks:
