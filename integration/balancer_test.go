@@ -55,10 +55,10 @@ func (s *IntegrationTestSuite) TestGetRequest() {
 		} else {
 			serverNum = 3
 		}
-		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum + 1), resp.Header.Get("lb-from"))
-
 		resp, err = getData("procrastination")
 		assert.Equal(s.T(), http.StatusNotFound, resp.StatusCode)
+
+		assert.Equal(s.T(), fmt.Sprintf("server%d:8080", serverNum + 1), resp.Header.Get("lb-from"))
 	}
 }
 
