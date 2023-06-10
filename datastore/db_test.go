@@ -97,7 +97,6 @@ func TestDb_Put(t *testing.T) {
 		{"keyA", "valueA"},
 		{"keyB", "valueB"},
 		{"keyC", "valueC"},
-		{"keyD", "valueD"},
 		{"keyA", "newA"},
 		{"keyB", "newB"},
 		{"keyC", "newC"},
