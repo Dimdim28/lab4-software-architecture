@@ -80,10 +80,10 @@ func TestDb_Put(t *testing.T) {
 		for _, pair := range pairs {
 			value, err := db.Get(pair[0])
 			if err != nil {
-				t.Errorf("Cannot put %s: %s", pairs[0], err)
+				t.Errorf("ERROR! Can't put %s: %s", pairs[0], err)
 			}
 			if value != pair[1] {
-				t.Errorf("Bad value returned expected %s, got %s", pair[1], value)
+				t.Errorf("ERROR!\nExpected: %s;\nGot: %s", pair[1], value)
 			}
 		}
 	})
@@ -113,29 +113,29 @@ func TestDb_Put(t *testing.T) {
 		defer files.Close()
 		filesNames, err := files.Readdirnames(0)
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("ERROR! Unexpected error: %v", err)
 		}
 		n := len(filesNames)
 		if n != 2 {
-			t.Errorf("Expected 2 files in the directory, got %v", n)
+			t.Errorf("ERROR!\nExpected: 2;\nGot: %v", n)
 		}
 	})
 
 	t.Run("get, if db has more than one files, ", func(t *testing.T) {
 		value, err := db.Get(pairs2[5][0])
 		if err != nil {
-			t.Errorf("Cannot get %s: %s", pairs2[5], err)
+			t.Errorf("ERROR! Can't get %s: %s", pairs2[5], err)
 		}
 		if value != pairs2[5][1] {
-			t.Errorf("Bad value returned expected %s, got %s", pairs2[5], value)
+			t.Errorf("ERROR!\nExpected: %s;\nGot: %s", pairs2[5], value)
 		}
 
 		value, err = db.Get(pairs[0][0])
 		if err != nil {
-			t.Errorf("Cannot get %s: %s", pairs2[5], err)
+			t.Errorf("ERROR! Can't get %s: %s", pairs2[5], err)
 		}
 		if value != pairs[0][1] {
-			t.Errorf("Bad value returned expected %s, got %s", pairs[0], value)
+			t.Errorf("ERROR!\nExpected: %s;\nGot: %s", pairs[0], value)
 		}
 	})
 

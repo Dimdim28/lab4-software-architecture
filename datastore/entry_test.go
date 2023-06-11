@@ -10,10 +10,10 @@ func TestEntry_Encode(t *testing.T) {
 	e := entry{"key", "string", "value"}
 	e.Decode(e.Encode())
 	if e.key != "key" {
-		t.Error("incorrect key")
+		t.Error("ERROR! Incorrect key")
 	}
 	if e.value != "value" {
-		t.Error("incorrect value")
+		t.Error("ERROR! Incorrect value")
 	}
 }
 
