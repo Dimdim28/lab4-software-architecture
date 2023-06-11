@@ -51,7 +51,7 @@ func NewDb(dir string) (*Db, error) {
 			return nil, err
 		}
 	} else { // create the first block, if directory is empty
-		err = db.addNewBlockToDb()
+		err = db.addNewBlockToDB()
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func NewDb(dir string) (*Db, error) {
 	return db, nil
 }
 
-func (db *Db) addNewBlockToDb() error {
+func (db *Db) addNewBlockToDB() error {
 	db.segmentNumber++
 	b, err := newBlock(db.dir,
 		db.segmentName+strconv.Itoa((db.segmentNumber)))
@@ -118,7 +118,7 @@ func (db *Db) putType(key, vType, value string) error {
 		return nil
 	}
 
-	err = db.addNewBlockToDb() // then we create a new block, if no place to write
+	err = db.addNewBlockToDB() // if no place to write, we create new block
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (db *Db) putType(key, vType, value string) error {
 		return err
 	}
 
-	if len(db.blocks) > 2 { // if there are enug files, start the merge
+	if len(db.blocks) > 2 { // if there are enough files, start the merge
 		err = db.merge()
 		if err != nil {
 			return err

@@ -15,7 +15,7 @@ import (
 
 var (
 	port = flag.Int("port", 8100, "server port")
-	db *datastore.Db
+	db   *datastore.Db
 )
 
 func main() {
@@ -49,7 +49,7 @@ func handleDb(rw http.ResponseWriter, r *http.Request) {
 			data, err := getInt64(key)
 			sendResponse(rw, data, err)
 		default:
-			http.Error(rw, "Unknown data type", http.StatusBadRequest)
+			http.Error(rw, "ERROR! Unknown data type", http.StatusBadRequest)
 		}
 	case http.MethodPost:
 		t := r.URL.Query().Get("type")
@@ -62,10 +62,10 @@ func handleDb(rw http.ResponseWriter, r *http.Request) {
 			err := putInt64(key, value)
 			sendResponse(rw, nil, err)
 		default:
-			http.Error(rw, "Unknown data type", http.StatusBadRequest)
+			http.Error(rw, "ERROR! Unknown data type", http.StatusBadRequest)
 		}
 	default:
-		http.Error(rw, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(rw, "ERROR! Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -103,7 +103,7 @@ func getInt64(key string) (interface{}, error) {
 
 func putString(key, value string) error {
 	if value == "" {
-		return fmt.Errorf("can't save empty value")
+		return fmt.Errorf("ERROR! Can't save empty value")
 	}
 	return db.Put(key, value)
 }
@@ -111,7 +111,7 @@ func putString(key, value string) error {
 func putInt64(key, value string) error {
 	i, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
-		return fmt.Errorf("can't convert value to the given type")
+		return fmt.Errorf("ERROR! Can't convert value to the given type")
 	}
 	return db.PutInt64(key, i)
 }
