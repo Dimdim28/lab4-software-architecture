@@ -21,8 +21,7 @@ type block struct {
 	outPath   string
 	outOffset int64
 	rwmu      sync.RWMutex
-	writeCh   chan []byte
-	resultCh  chan writeResult
+	writeCh chan writeArgument
 	cancel    context.CancelFunc
 }
 
@@ -36,9 +35,8 @@ func newBlock(dir, outFileName string) (*block, error) {
 	bl := &block{
 		index:    make(hashIndex),
 		segment:  f,
-		outPath:  outputPath,
-		writeCh:  make(chan []byte),
-		resultCh: make(chan writeResult),
+		outPath: outputPath,
+		writeCh: make(chan writeArgument),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -108,13 +106,12 @@ func (b *block) recover() error {
 func (b *block) close() error {
 	b.cancel()
 	close(b.writeCh)
-	close(b.resultCh)
 	return b.segment.Close()
 }
 
 func (b *block) get(key string) (string, string, error) {
 	b.rwmu.RLock()
-	defer b.rwmu.RUnlock()
+	b.rwmu.RUnlock()
 
 	position, ok := b.index[key]
 
@@ -152,21 +149,22 @@ func (b *block) get(key string) (string, string, error) {
 
 func (b *block) put(key, vType, value string) error {
 
-	b.rwmu.Lock()
-	defer b.rwmu.Unlock()
-
 	e := entry{
 		key:   key,
 		vType: vType,
 		value: value,
 	}
 
-	b.writeCh <- e.Encode()
-	result := <-b.resultCh
+	resultCh := make(chan writeResult)
+	b.writeCh <- writeArgument{resultCh, e.Encode()}
+	result := <-resultCh
+	close(resultCh)
 
 	if result.err == nil {
+		b.rwmu.Lock()
 		b.index[key] = b.outOffset
 		b.outOffset += int64(result.n)
+		b.rwmu.Unlock()
 	}
 
 	return result.err
@@ -177,14 +175,19 @@ type writeResult struct {
 	err error
 }
 
+type writeArgument struct {
+	resultCh chan writeResult
+	data     []byte
+}
+
 func (b *block) write(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case v := <-b.writeCh:
-			n, err := b.segment.Write(v)
-			b.resultCh <- writeResult{n, err}
+		case arg := <-b.writeCh:
+			n, err := b.segment.Write(arg.data)
+			arg.resultCh <- writeResult{n, err}
 		}
 	}
 }
